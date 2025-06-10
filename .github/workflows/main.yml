@@ -1,7 +1,7 @@
 name: Deploy Ubuntu VM with PowerShell
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
 
 jobs:
   deploy-vm:
@@ -11,15 +11,15 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Azure PowerShell
-        run: |
-          pwsh -Command "Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force"
-      
-      - name: Azure Login
+      - name: Azure Login and Deploy VM
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Run PowerShell script to deploy VM
         shell: pwsh
-        run: ./vmcreate.ps1  # Ensure your script is named vmcreate.ps1 and in repo root
+        run: |
+          # Import Az module
+          Import-Module Az
+          # Run your deployment script
+          ./vmcreate.ps1
