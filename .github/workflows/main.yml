@@ -8,19 +8,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Az Module, Login, and Deploy VM
+      - name: Install Az Module, Login, and Deploy
         shell: pwsh
         env:
           AZURE_CLIENT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
           AZURE_CLIENT_SECRET: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
           AZURE_TENANT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
+          VM_USERNAME: ${{ secrets.VM_USERNAME }}
+          VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
         run: |
           Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force -ErrorAction Stop
           Import-Module Az -ErrorAction Stop
           $securePassword = ConvertTo-SecureString $env:AZURE_CLIENT_SECRET -AsPlainText -Force
-          $cred = New-Object System.Management.Automation.PSCredential($env:AZURE_CLIENT_ID, $securePassword)
-          Connect-AzAccount -ServicePrincipal -Tenant $env:AZURE_TENANT_ID -Credential $cred
+          $psCred = New-Object System.Management.Automation.PSCredential ($env:AZURE_CLIENT_ID, $securePassword)
+          Connect-AzAccount -ServicePrincipal -Tenant $env:AZURE_TENANT_ID -Credential $psCred
+
+          # Set VM credentials from secrets
+          $username = $env:VM_USERNAME
+          $password = ConvertTo-SecureString $env:VM_PASSWORD -AsPlainText -Force
+          $cred = New-Object System.Management.Automation.PSCredential ($username, $password)
+
           ./vmcreate.ps1
