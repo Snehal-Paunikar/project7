@@ -11,15 +11,16 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Azure Login and Deploy VM
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Run PowerShell script to deploy VM
+      - name: Install Az Module, Login, and Deploy VM
         shell: pwsh
+        env:
+          AZURE_CLIENT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
+          AZURE_CLIENT_SECRET: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
+          AZURE_TENANT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
         run: |
-          # Import Az module
-          Import-Module Az
-          # Run your deployment script
+          Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force -ErrorAction Stop
+          Import-Module Az -ErrorAction Stop
+          $securePassword = ConvertTo-SecureString $env:AZURE_CLIENT_SECRET -AsPlainText -Force
+          $cred = New-Object System.Management.Automation.PSCredential($env:AZURE_CLIENT_ID, $securePassword)
+          Connect-AzAccount -ServicePrincipal -Tenant $env:AZURE_TENANT_ID -Credential $cred
           ./vmcreate.ps1
