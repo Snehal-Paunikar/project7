@@ -21,17 +21,34 @@ if (-not (Get-AzResourceGroup -Name $rg -ErrorAction SilentlyContinue)) {
 }
 
 # Step 2: Create a virtual network in the resource group
-New-AzVirtualNetwork -Name $vnetName -ResourceGroupName $rg -Location $location -AddressPrefix $addressPrefixVNet
+# New-AzVirtualNetwork -Name $vnetName -ResourceGroupName $rg -Location $location -AddressPrefix $addressPrefixVNet
+if (-not (Get-AzVirtualNetwork -Name $vnetName -ResourceGroupName $rg -ErrorAction SilentlyContinue)) {
+    New-AzVirtualNetwork -Name $vnetName -ResourceGroupName $rg -Location $location -AddressPrefix $addressPrefixVNet
+} else {
+    Write-Output "Virtual Network '$vnetName' already exists. Skipping creation."
+}
 
 # Step 3: Create a subnet configuration for a virtual network
 $subnetConfig = New-AzVirtualNetworkSubnetConfig -Name $subnetName -AddressPrefix $addressPrefixSubnet
 
 # Step 4: Create a network security group in the resource group
-New-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $rg -Location $location
+# New-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $rg -Location $location
+if (-not (Get-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $rg -ErrorAction SilentlyContinue)) {
+    New-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $rg -Location $location
+} else {
+    Write-Output "Network Security Group '$nsgName' already exists. Skipping creation."
+}
 
 # Step 5: Create a network interface for the VM
-$subnetId = "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.Network/virtualNetworks/$vnetName/subnets/$subnetName" # Ensure the subnet ID is correct
-New-AzNetworkInterface -Name $nicName -ResourceGroupName $rg -Location $location -SubnetId $subnetId
+# $subnetId = "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.Network/virtualNetworks/$vnetName/subnets/$subnetName" # Ensure the subnet ID is correct
+# New-AzNetworkInterface -Name $nicName -ResourceGroupName $rg -Location $location -SubnetId $subnetId
+$subnetId = "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.Network/virtualNetworks/$vnetName/subnets/$subnetName"
+
+if (-not (Get-AzNetworkInterface -Name $nicName -ResourceGroupName $rg -ErrorAction SilentlyContinue)) {
+    New-AzNetworkInterface -Name $nicName -ResourceGroupName $rg -Location $location -SubnetId $subnetId
+} else {
+    Write-Output "Network Interface '$nicName' already exists. Skipping creation."
+}
 
 # Step 6: Create a basic Ubuntu VM in the subnet with the network interface
 $credential = Get-Credential # Prompt for VM credentials
