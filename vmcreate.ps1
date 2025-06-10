@@ -51,5 +51,23 @@ if (-not (Get-AzNetworkInterface -Name $nicName -ResourceGroupName $rg -ErrorAct
 }
 
 # Step 6: Create a basic Ubuntu VM in the subnet with the network interface
-$credential = Get-Credential # Prompt for VM credentials
+# $credential = Get-Credential # Prompt for VM credentials
+# New-AzVM -ResourceGroupName $rg -Location $location -Name $vmName -Credential $credential -Image "Ubuntu2204" -Size "Standard_D2ads_v6" -SubnetName $subnetName -VirtualNetworkName $vnetName
+# Set the username for the VM (can be hardcoded or passed as env variable)
+$username = "azureuser"
+
+# Get the plain password from environment variable VM_PASSWORD
+$passwordPlain = $env:VM_PASSWORD
+
+if (-not $passwordPlain) {
+    throw "VM_PASSWORD environment variable is not set!"
+}
+
+# Convert plain password to secure string
+$securePassword = ConvertTo-SecureString $passwordPlain -AsPlainText -Force
+
+# Create PSCredential object
+$credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
+
+# Create the VM with credential
 New-AzVM -ResourceGroupName $rg -Location $location -Name $vmName -Credential $credential -Image "Ubuntu2204" -Size "Standard_D2ads_v6" -SubnetName $subnetName -VirtualNetworkName $vnetName
