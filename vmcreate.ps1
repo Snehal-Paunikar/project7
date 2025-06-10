@@ -13,7 +13,12 @@ $addressPrefixSubnet = '10.0.1.0/24'
 $subscriptionId = 'bd44ed4c-c242-4fb8-916c-82e4c122d991' # Specify your subscription ID
 
 # Step 1: Create a new resource group
-New-AzResourceGroup -Name $rg -Location $location
+# New-AzResourceGroup -Name $rg -Location $location
+if (-not (Get-AzResourceGroup -Name $rg -ErrorAction SilentlyContinue)) {
+    New-AzResourceGroup -Name $rg -Location $location
+} else {
+    Write-Output "Resource group '$rg' already exists. Skipping creation."
+}
 
 # Step 2: Create a virtual network in the resource group
 New-AzVirtualNetwork -Name $vnetName -ResourceGroupName $rg -Location $location -AddressPrefix $addressPrefixVNet
